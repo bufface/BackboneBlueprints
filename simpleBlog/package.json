@@ -1,0 +1,20 @@
+{
+  "name": "backbone-blog",
+  "version": "1.0.0",
+  "description": "Training from book: Backbone Blueprints",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "3.x.x",
+    "ejs" : "~0.8.4",
+    "bourne" : "0.3"
+  },
+  "devDependencies": {
+    "nodemon": "latest"
+  }
+}
