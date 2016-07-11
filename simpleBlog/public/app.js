@@ -8,24 +8,6 @@ var Posts = Backbone.Collection.extend({
  url: "/posts"
 });
 
-var PostView = Backbone.View.extend({
-  template: _.template($("#postView").html()),
-  events: {
-    'click a': 'handleClick'
-  },
-  render: function () {
-    var model = this.model.toJSON();
-    model.pubDate = new Date(Date.parse(model.pubDate)).toDateString();
-    this.el.innerHTML = this.template(model);
-    return this;
-  },
-  handleClick: function (e) {
-    e.preventDefault();
-    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
-    return false;
-  }
-});
-
 var PostListView = Backbone.View.extend({
   tagName: "li",
   template: _.template("<a href='/posts/{{id}}'>{{title}}</a>"),
@@ -56,6 +38,49 @@ var PostsListView = Backbone.View.extend({
   }
 });
 
+var PostView = Backbone.View.extend({
+  template: _.template($("#postView").html()),
+  events: {
+    'click a': 'handleClick'
+  },
+  render: function () {
+    var model = this.model.toJSON();
+    model.pubDate = new Date(Date.parse(model.pubDate)).toDateString();
+    this.el.innerHTML = this.template(model);
+    return this;
+  },
+  handleClick: function (e) {
+    e.preventDefault();
+    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
+    return false;
+  }
+});
+
+var PostFormView = Backbone.View.extend({
+  tagName: 'form',
+  template: _.template($("#postFormView").html()),
+  initialize: function (options) {
+    this.posts = options.posts;
+  },
+  events: {
+    'click button': 'createPost'
+  },
+  render: function () {
+    this.el.innerHTML = this.template();
+    return this;
+  },
+  createPost: function (e) {
+    var postAttrs = {
+      content: $("#postText").val(),
+      title: $("#postTitle").val(),
+      pubDate: new Date()
+    };
+    this.posts.create(postAttrs);
+    postRouter.navigate("/", { trigger: true });
+    return false;
+  }
+});
+
 var PostRouter = Backbone.Router.extend({
   initialize: function (options) {
     this.posts = options.posts;
@@ -63,7 +88,8 @@ var PostRouter = Backbone.Router.extend({
   },
   routes: {
     '': 'index',
-    'posts/:id': 'singlePost'
+    'posts/:id': 'singlePost',
+    'posts/new': 'newPost'
   },
   index: function () {
     var pv = new PostsListView({ collection: this.posts })
@@ -73,5 +99,9 @@ var PostRouter = Backbone.Router.extend({
     var post = this.posts.get(id);
     var pv = new PostView({ model: post });
     this.main.html(pv.render().el);
+  },
+  newPost: function () {
+    var pfv = new PostFormView({ posts: this.posts });
+    this.main.html(pfv.render().el);
   }
 });
