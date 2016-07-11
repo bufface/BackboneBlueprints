@@ -8,6 +8,24 @@ var Posts = Backbone.Collection.extend({
  url: "/posts"
 });
 
+var PostView = Backbone.View.extend({
+  template: _.template($("#postView").html()),
+  events: {
+    'click a': 'handleClick'
+  },
+  render: function () {
+    var model = this.model.toJSON();
+    model.pubDate = new Date(Date.parse(model.pubDate)).toDateString();
+    this.el.innerHTML = this.template(model);
+    return this;
+  },
+  handleClick: function (e) {
+    e.preventDefault();
+    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
+    return false;
+  }
+});
+
 var PostListView = Backbone.View.extend({
   tagName: "li",
   template: _.template("<a href='/posts/{{id}}'>{{title}}</a>"),
@@ -52,6 +70,8 @@ var PostRouter = Backbone.Router.extend({
     this.main.html(pv.render().el);
   },
   singlePost: function (id) {
-    console.log("view post " + id);
+    var post = this.posts.get(id);
+    var pv = new PostView({ model: post });
+    this.main.html(pv.render().el);
   }
 });
