@@ -2,17 +2,7 @@ _.templateSettings = {
   interpolate: /\{\{(.+?)\}\}/g
 };
 
-var Post = Backbone.Model.extend({});
-var Posts = Backbone.Collection.extend({
- model: Post,
- url: "/posts"
-});
-
-var Comment = Backbone.Model.extend({
-  initialize: function () {
-    this.comments = new Comments([], { post: this });
-  }
-});
+var Comment = Backbone.Model.extend({});
 var Comments = Backbone.Collection.extend({
   initialize: function (models, options) {
     this.post = options.post;
@@ -22,52 +12,14 @@ var Comments = Backbone.Collection.extend({
   }
 });
 
-var PostListView = Backbone.View.extend({
-  tagName: "li",
-  template: _.template("<a href='/posts/{{id}}'>{{title}}</a>"),
-  events: {
-    'click a': 'handleClick'
-  },
-  handleClick: function (e) {
-    e.preventDefault();
-    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
-  },
-  render: function () {
-    this.el.innerHTML = this.template(this.model.toJSON());
-    return this;
+var Post = Backbone.Model.extend({
+  initialize: function () {
+    this.comments = new Comments([], { post: this });
   }
 });
-
-var PostsListView = Backbone.View.extend({
-  template: _.template("<h1>My Blog</h1><ul></ul>"),
-  render: function () {
-    this.el.innerHTML = this.template();
-    var ul = this.$el.find("ul");
-    this.collection.forEach(function (post) {
-      ul.append(new PostListView({
-        model: post
-      }).render().el);
-    });
-    return this;
-  }
-});
-
-var PostView = Backbone.View.extend({
-  template: _.template($("#postView").html()),
-  events: {
-    'click a': 'handleClick'
-  },
-  render: function () {
-    var model = this.model.toJSON();
-    model.pubDate = new Date(Date.parse(model.pubDate)).toDateString();
-    this.el.innerHTML = this.template(model);
-    return this;
-  },
-  handleClick: function (e) {
-    e.preventDefault();
-    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
-    return false;
-  }
+var Posts = Backbone.Collection.extend({
+  model: Post,
+  url: "/posts"
 });
 
 var PostFormView = Backbone.View.extend({
@@ -95,6 +47,51 @@ var PostFormView = Backbone.View.extend({
   }
 });
 
+var PostListView = Backbone.View.extend({
+  tagName: 'li',
+  template: _.template("<a href='/posts/{{id}}'>{{title}}</a>"),
+  render: function () {
+    this.el.innerHTML = this.template(this.model.toJSON());
+    return this;
+  },
+  events: {
+    'click a': 'handleClick'
+  },
+  handleClick: function (e) {
+    e.preventDefault();
+    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
+  }
+});
+
+var PostsListView = Backbone.View.extend({
+  template: _.template("<h1>My Blog</h1><ul></ul>"),
+  render: function () {
+    this.el.innerHTML = this.template();
+    var ul = this.$el.find("ul");
+    this.collection.forEach(function (post) {
+      ul.append(new PostListView({ model: post }).render().el);
+    });
+    return this;
+  }
+});
+
+var PostView = Backbone.View.extend({
+  template: _.template($("#postView").html()),
+  events: {
+    'click a': 'handleClick'
+  },
+  render: function () {
+    var model = this.model.toJSON();
+    model.pubDate = new Date(Date.parse(model.pubDate)).toDateString();
+    this.el.innerHTML = this.template(model);
+    return this;
+  },
+  handleClick: function (e) {
+    e.preventDefault();
+    postRouter.navigate($(e.currentTarget).attr("href"), {trigger: true});
+  }
+});
+
 var CommentView = Backbone.View.extend({
   template: _.template($("#commentView").html()),
   render: function () {
@@ -119,6 +116,7 @@ var CommentFormView = Backbone.View.extend({
     return this;
   },
   submitComment: function (e) {
+    e.preventDefault();
     var name = this.$("#cmtName").val();
     var text = this.$("#cmtText").val();
     var commentAttrs = {
@@ -138,15 +136,11 @@ var CommentsView = Backbone.View.extend({
     this.post.comments.on('add', this.addComment, this);
   },
   addComment: function (comment) {
-    this.$el.append(new CommentView({
-      model: comment
-    }).render().el);
+    this.$el.append(new CommentView({ model: comment }).render().el);
   },
   render: function () {
     this.$el.append("<h2> Comments </h2>");
-    this.$el.append(new CommentFormView({
-      post: this.post
-    }).render().el);
+    this.$el.append(new CommentFormView({ post: this.post }).render().el);
     this.post.comments.fetch();
     return this;
   }
@@ -155,24 +149,26 @@ var CommentsView = Backbone.View.extend({
 var PostRouter = Backbone.Router.extend({
   initialize: function (options) {
     this.posts = options.posts;
-    this.main = options.main;
+    this.main  = options.main;
   },
   routes: {
-    '': 'index',
+    ''         : 'index',
     'posts/new': 'newPost',
-    'posts/:id': 'singlePost',
+    'posts/:id': 'singlePost'
   },
   index: function () {
-    var pv = new PostsListView({ collection: this.posts })
-    this.main.html(pv.render().el);
-  },
-  singlePost: function (id) {
-    var post = this.posts.get(id);
-    var pv = new PostView({ model: post });
+    var pv = new PostsListView({ collection: this.posts });
     this.main.html(pv.render().el);
   },
   newPost: function () {
     var pfv = new PostFormView({ posts: this.posts });
     this.main.html(pfv.render().el);
+  },
+  singlePost: function (id) {
+    var post = this.posts.get(id);
+    var pv = new PostView({ model: post });
+    this.main.html(pv.render().el);
+    var cv = new CommentsView({ post: post });
+    this.main.append(cv.render().el);
   }
 });
