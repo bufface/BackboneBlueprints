@@ -8,6 +8,20 @@ var Posts = Backbone.Collection.extend({
  url: "/posts"
 });
 
+var Comment = Backbone.Model.extend({
+  initialize: function () {
+    this.comments = new Comments([], { post: this });
+  }
+});
+var Comments = Backbone.Collection.extend({
+  initialize: function (models, options) {
+    this.post = options.post;
+  },
+  url: function () {
+    return this.post.url() + "/comments";
+  }
+});
+
 var PostListView = Backbone.View.extend({
   tagName: "li",
   template: _.template("<a href='/posts/{{id}}'>{{title}}</a>"),
